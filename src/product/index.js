@@ -15,32 +15,48 @@ exports.handler = async function (event) {
 
   // TODO - switch case event.httpMethod to perform CRUD operations
   // using ddbClient object
-  let body = '';
-  switch (event.httpMethod) {
-    case 'GET':
-      if (event.queryStringParameters != null) {
-        body = await getProductsByCategory(event);
-      } else if (event.pathParameters != null) {
-        body = await getProduct(event.pathParameters.id);
-      } else {
-        body = await getAllProducts();
-      }
-    case 'POST':
-      body = await createProduct(event);
-    case 'DELETE':
-      body = await removeProduct(event.pathParameters.id);
-    case 'PUT':
-      body = await updateProduct(event);
+  try {
+    let body = '';
+    switch (event.httpMethod) {
+      case 'GET':
+        if (event.queryStringParameters != null) {
+          body = await getProductsByCategory(event);
+        } else if (event.pathParameters != null) {
+          body = await getProduct(event.pathParameters.id);
+        } else {
+          body = await getAllProducts();
+        }
+        break;
+      case 'POST':
+        body = await createProduct(event);
+        break;
+      case 'DELETE':
+        body = await removeProduct(event.pathParameters.id);
+        break;
+      case 'PUT':
+        body = await updateProduct(event);
+        break;
+      default:
+        throw new Error(`Unsupported route: "${event.httpMethod}"`);
+    }
 
-    // default:
-    //   throw new Error(`Unsupported route: "${event.httpMethod}"`);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: `Successfully finished operation: "${event.httpMethod}"`,
+        body,
+      }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: 'Failed to perform operation.',
+        errorMsg: error.message,
+        errorStack: error.stack,
+      }),
+    };
   }
-
-  return {
-    statusCode: 200,
-    headers: { 'Content-type': 'text/plain' },
-    body,
-  };
 };
 
 const getProductsByCategory = async (event) => {

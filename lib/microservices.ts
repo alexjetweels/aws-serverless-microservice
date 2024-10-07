@@ -1,7 +1,7 @@
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
-import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import {
   NodejsFunction,
   NodejsFunctionProps,

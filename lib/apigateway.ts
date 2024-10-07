@@ -1,32 +1,80 @@
 import { LambdaRestApi } from 'aws-cdk-lib/aws-apigateway';
-import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
 interface SwnApiGatewayProps {
-  productMicroservices: IFunction;
-  basketMicroservices: IFunction;
+  productMicroservice: IFunction;
+  basketMicroservice: IFunction;
 }
-export class SwnApiGateway extends Construct {
-  public readonly productTable: ITable;
 
+export class SwnApiGateway extends Construct {
   constructor(scope: Construct, id: string, props: SwnApiGatewayProps) {
     super(scope, id);
 
-    const apgw = new LambdaRestApi(this, 'productApi', {
+    // Product api gateway
+    this.createProductApi(props.productMicroservice);
+    // Basket api gateway
+    this.createBasketApi(props.basketMicroservice);
+  }
+
+  private createProductApi(productMicroservice: IFunction) {
+    // Product microservices api gateway
+    // root name = product
+
+    // GET /product
+    // POST /product
+
+    // Single product with id parameter
+    // GET /product/{id}
+    // PUT /product/{id}
+    // DELETE /product/{id}
+
+    const apigw = new LambdaRestApi(this, 'productApi', {
       restApiName: 'Product Service',
-      handler: props.productMicroservices,
+      handler: productMicroservice,
       proxy: false,
     });
 
-    // CRUD - /product
-    const product = apgw.root.addResource('product');
-    product.addMethod('GET');
-    product.addMethod('POST');
+    const product = apigw.root.addResource('product');
+    product.addMethod('GET'); // GET /product
+    product.addMethod('POST'); // POST /product
 
-    const singleProduct = product.addResource('{id}');
-    singleProduct.addMethod('GET');
-    singleProduct.addMethod('PUT');
-    singleProduct.addMethod('DELETE');
+    const singleProduct = product.addResource('{id}'); // product/{id}
+    singleProduct.addMethod('GET'); // GET /product/{id}
+    singleProduct.addMethod('PUT'); // PUT /product/{id}
+    singleProduct.addMethod('DELETE'); // DELETE /product/{id}
+  }
+
+  private createBasketApi(basketMicroservice: IFunction) {
+    // Basket microservices api gateway
+    // root name = basket
+
+    // GET /basket
+    // POST /basket
+
+    // // Single basket with userName parameter - resource name = basket/{userName}
+    // GET /basket/{userName}
+    // DELETE /basket/{userName}
+
+    // checkout basket async flow
+    // POST /basket/checkout
+
+    const apigw = new LambdaRestApi(this, 'basketApi', {
+      restApiName: 'Basket Service',
+      handler: basketMicroservice,
+      proxy: false,
+    });
+
+    const basket = apigw.root.addResource('basket');
+    basket.addMethod('GET'); // GET /basket
+    basket.addMethod('POST'); // POST /basket
+
+    const singleBasket = basket.addResource('{userName}');
+    singleBasket.addMethod('GET'); // GET /basket/{userName}
+    singleBasket.addMethod('DELETE'); // DELETE /basket/{userName}
+
+    const basketCheckout = basket.addResource('checkout');
+    basketCheckout.addMethod('POST'); // POST /basket/checkout
+    // expected request payload : { userName : swn }
   }
 }

@@ -17,8 +17,8 @@ export class AwsMicroservicesStack extends cdk.Stack {
     });
 
     new SwnApiGateway(this, 'ApiGateway', {
-      productMicroservices: microservices.productMicroservice,
-      basketMicroservices: microservices.basketMicroservice,
+      productMicroservice: microservices.productMicroservice,
+      basketMicroservice: microservices.basketMicroservice,
     });
   }
 }

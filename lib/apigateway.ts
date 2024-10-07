@@ -5,6 +5,7 @@ import { Construct } from 'constructs';
 
 interface SwnApiGatewayProps {
   productMicroservices: IFunction;
+  basketMicroservices: IFunction;
 }
 export class SwnApiGateway extends Construct {
   public readonly productTable: ITable;

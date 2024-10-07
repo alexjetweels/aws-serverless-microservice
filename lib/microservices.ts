@@ -1,42 +1,73 @@
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
-import { Construct } from 'constructs';
-
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import {
   NodejsFunction,
   NodejsFunctionProps,
 } from 'aws-cdk-lib/aws-lambda-nodejs';
-import path = require('path');
+import { Construct } from 'constructs';
+import { join } from 'path';
 
 interface SwnMicroservicesProps {
   productTable: ITable;
+  basketTable: ITable;
 }
+
 export class SwnMicroservices extends Construct {
-  public readonly productFunction: NodejsFunction;
+  public readonly productMicroservice: NodejsFunction;
+  public readonly basketMicroservice: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: SwnMicroservicesProps) {
     super(scope, id);
 
-    const nodeJSFunctionProps: NodejsFunctionProps = {
+    // product microservices
+    this.productMicroservice = this.createProductFunction(props.productTable);
+    // basket microservices
+    this.basketMicroservice = this.createBasketFunction(props.basketTable);
+  }
+
+  private createProductFunction(productTable: ITable): NodejsFunction {
+    const nodeJsFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ['aws-sdk'],
       },
       environment: {
         PRIMARY_KEY: 'id',
-        DYNAMODB_TABLE_NAME: props.productTable.tableName,
+        DYNAMODB_TABLE_NAME: productTable.tableName,
       },
       runtime: Runtime.NODEJS_20_X,
     };
 
+    // Product microservices lambda function
     const productFunction = new NodejsFunction(this, 'productLambdaFunction', {
-      entry: path.join(__dirname, `/../src/product/index.js`),
-      ...nodeJSFunctionProps,
+      entry: join(__dirname, `/../src/product/index.js`),
+      ...nodeJsFunctionProps,
     });
 
-    // Grant permission read and write to our NodeJSFunction => We can interact with dynamoDB from our handle function.
-    // Other wise we will got permission error when access the dynamoDB.
-    props.productTable.grantReadWriteData(productFunction);
+    productTable.grantReadWriteData(productFunction);
 
-    this.productFunction = productFunction;
+    return productFunction;
+  }
+
+  private createBasketFunction(basketTable: ITable): NodejsFunction {
+    const basketFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: [
+          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+        ],
+      },
+      environment: {
+        PRIMARY_KEY: 'userName',
+        DYNAMODB_TABLE_NAME: basketTable.tableName,
+      },
+      runtime: Runtime.NODEJS_20_X,
+    };
+
+    const basketFunction = new NodejsFunction(this, 'basketLambdaFunction', {
+      entry: join(__dirname, `/../src/basket/index.js`),
+      ...basketFunctionProps,
+    });
+
+    basketTable.grantReadWriteData(basketFunction);
+    return basketFunction;
   }
 }

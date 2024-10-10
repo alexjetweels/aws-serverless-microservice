@@ -139,6 +139,10 @@ const checkoutBasket = async (event) => {
   console.log('checkoutBasket');
   // implement function
 
-  // publish an event to eventbridge - this will subscribe by order microservice
+  // publish an event to event bridge - this will subscribe by order microservice
   // and start ordering process.
+
+  const body = JSON.parse(event.body);
+  console.log(body);
+  return body;
 };

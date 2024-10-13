@@ -5,7 +5,7 @@ import {
   ScanCommand,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { ddbClient } from './dynamoDbClient';
+import { ddbClient } from './dynamoDBClient';
 
 exports.handler = async function (event) {
   console.log('request:', JSON.stringify(event, undefined, 2));

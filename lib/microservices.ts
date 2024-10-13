@@ -10,11 +10,13 @@ import { join } from 'path';
 interface SwnMicroservicesProps {
   productTable: ITable;
   basketTable: ITable;
+  orderTable: ITable;
 }
 
 export class SwnMicroservices extends Construct {
   public readonly productMicroservice: NodejsFunction;
   public readonly basketMicroservice: NodejsFunction;
+  public readonly orderMicroservice: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: SwnMicroservicesProps) {
     super(scope, id);
@@ -23,6 +25,9 @@ export class SwnMicroservices extends Construct {
     this.productMicroservice = this.createProductFunction(props.productTable);
     // basket microservices
     this.basketMicroservice = this.createBasketFunction(props.basketTable);
+
+    // order microservices
+    this.orderMicroservice = this.createOrderFunction(props.orderTable);
   }
 
   private createProductFunction(productTable: ITable): NodejsFunction {
@@ -69,5 +74,29 @@ export class SwnMicroservices extends Construct {
 
     basketTable.grantReadWriteData(basketFunction);
     return basketFunction;
+  }
+
+  private createOrderFunction(orderTale: ITable): NodejsFunction {
+    const orderFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: [
+          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+        ],
+      },
+      environment: {
+        PRIMARY_KEY: 'userName',
+        SORT_KEY: 'orderDate',
+        DYNAMODB_TABLE_NAME: orderTale.tableName,
+      },
+      runtime: Runtime.NODEJS_20_X,
+    };
+
+    const orderFunction = new NodejsFunction(this, 'orderLambdaFunction', {
+      entry: join(__dirname, `/../src/ordering/index.js`),
+      ...orderFunctionProps,
+    });
+
+    orderTale.grantReadWriteData(orderFunction);
+    return orderFunction;
   }
 }
